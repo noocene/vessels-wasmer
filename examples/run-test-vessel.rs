@@ -4,7 +4,7 @@ use core::{
     task::{Context, Poll},
 };
 use core_futures_io::AsyncWrite;
-use futures::{executor::block_on};
+use futures::executor::block_on;
 use std::{fs::read, string::FromUtf8Error};
 use vessels::{
     register,
@@ -47,11 +47,11 @@ impl AsyncWrite for TestWriter {
         Poll::Ready(Ok(buf.len()))
     }
 
-    fn poll_flush(self: Pin<&mut Self>, _: &mut Context) -> Poll<Result<(), Self::WriteError>> {
+    fn poll_flush(self: Pin<&mut Self>, _: &mut Context) -> Poll<Result<(), Self::FlushError>> {
         Poll::Ready(Ok(()))
     }
 
-    fn poll_close(self: Pin<&mut Self>, _: &mut Context) -> Poll<Result<(), Self::WriteError>> {
+    fn poll_close(self: Pin<&mut Self>, _: &mut Context) -> Poll<Result<(), Self::CloseError>> {
         Poll::Ready(Ok(()))
     }
 }
@@ -87,11 +87,7 @@ async fn entry() {
     let mut runtime = WasmerRuntime;
 
     runtime
-        .instantiate(
-            resource,
-            TestWriter,
-            [10u8, 2u8, 3u8, 50u8].as_ref(),
-        )
+        .instantiate(resource, TestWriter, [10u8, 2u8, 3u8, 50u8].as_ref())
         .await
         .unwrap();
 }
