@@ -1,6 +1,6 @@
 use core_futures_io::{AsyncRead, AsyncWrite};
 use futures::{
-    channel::mpsc::{channel, Receiver, Sender},
+    channel::oneshot::{channel, Receiver, Sender},
     task::{waker as make_waker, ArcWake, AtomicWaker},
     Future,
 };
@@ -41,7 +41,7 @@ impl<T: AsyncWrite, U: AsyncRead> Future for WasmerFuture<T, U> {
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         self.waker.register(cx.waker());
 
-        match self.error.try_next() {
+        match self.error.try_recv() {
             Ok(Some(e)) => return Poll::Ready(Err(e)),
             _ => {}
         }
@@ -157,7 +157,7 @@ where
 
     fn instantiate(&mut self, module: WasmResource, writer: T, reader: U) -> Self::Instance {
         Box::pin(async move {
-            let (error_sender, error) = channel(0);
+            let (error_sender, error) = channel();
 
             let error_sender = Some(error_sender);
 
@@ -233,8 +233,8 @@ where
                                     (len + 1) as i32
                                 }
                                 Poll::Ready(Err(e)) => {
-                                    if let Some(mut sender) = context.error_sender.take() {
-                                        let _ = sender.try_send(RuntimeError::Read(e));
+                                    if let Some(sender) = context.error_sender.take() {
+                                        let _ = sender.send(RuntimeError::Read(e));
                                     }
                                     context.waker.wake();
 
@@ -261,8 +261,8 @@ where
                                     (len + 1) as i32
                                 }
                                 Poll::Ready(Err(e)) => {
-                                    if let Some(mut sender) = context.error_sender.take() {
-                                        let _ = sender.try_send(RuntimeError::Write(e));
+                                    if let Some(sender) = context.error_sender.take() {
+                                        let _ = sender.send(RuntimeError::Write(e));
                                     }
                                     context.waker.wake();
 
@@ -277,8 +277,8 @@ where
                                 Poll::Pending => 0,
                                 Poll::Ready(Ok(())) => 1,
                                 Poll::Ready(Err(e)) => {
-                                    if let Some(mut sender) = context.error_sender.take() {
-                                        let _ = sender.try_send(RuntimeError::Flush(e));
+                                    if let Some(sender) = context.error_sender.take() {
+                                        let _ = sender.send(RuntimeError::Flush(e));
                                     }
                                     context.waker.wake();
 
@@ -293,8 +293,8 @@ where
                                 Poll::Pending => 0,
                                 Poll::Ready(Ok(())) => 1,
                                 Poll::Ready(Err(e)) => {
-                                    if let Some(mut sender) = context.error_sender.take() {
-                                        let _ = sender.try_send(RuntimeError::Close(e));
+                                    if let Some(sender) = context.error_sender.take() {
+                                        let _ = sender.send(RuntimeError::Close(e));
                                     }
                                     context.waker.wake();
 
