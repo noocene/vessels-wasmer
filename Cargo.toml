@@ -6,7 +6,10 @@ edition = "2018"
 
 [dependencies]
 wasmer-runtime = "0.17.0"
-vessels = { git = "https://github.com/noocene/vessels" }
+vessels = { git = "https://github.com/noocene/vessels", features = ["ring-sha256"] }
 futures = "0.3.5"
 parking_lot = "0.10.2"
 core-futures-io = { git = "https://github.com/noocene/core-futures-io" }
+
+[workspace]
+members = ["examples/test-vessel"]
