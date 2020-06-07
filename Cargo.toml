@@ -1,0 +1,12 @@
+[package]
+name = "vessels-wasmer"
+version = "0.1.0"
+authors = ["Izzy Swart <zenerboson@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+wasmer-runtime = "0.17.0"
+vessels = { git = "https://github.com/noocene/vessels" }
+futures = "0.3.5"
+parking_lot = "0.10.2"
+core-futures-io = { git = "https://github.com/noocene/core-futures-io" }
