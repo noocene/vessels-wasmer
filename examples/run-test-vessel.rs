@@ -72,7 +72,7 @@ async fn entry() {
     register(move || {
         let manager = manager.clone();
 
-        Box::pin(async move { Ok::<_, Infallible>(manager.erase_resource_manager()) })
+        Box::pin(async move { Ok::<_, Infallible>(manager.into_erased()) })
     })
     .await
     .unwrap();
